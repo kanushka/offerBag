@@ -18,7 +18,24 @@ class VisaOfferController extends Controller
 
     public function getAllOffers($request, $response, $args)
     {
-        $res = $this->httpRequest("vmorc/offers/v1/all");
+        $res = $this->httpRequest("vmorc/offers/v1/all", 'GET');
+        return $response->withJson($res);
+    }
+
+    public function getOfferById($request, $response, $args)
+    {
+        $res = $this->httpRequest("vmorc/offers/v1/byofferid", 'GET', [
+            'offerid' => $args['id'],
+        ]);
+        return $response->withJson($res);
+    }
+
+    public function getCountyPromotedOffers($request, $response, $args)
+    {
+        $res = $this->httpRequest("vmorc/offers/v1/byfilter", 'GET', [
+            'promoting_country' => $args['code'],
+        ]
+    );
         return $response->withJson($res);
     }
 
@@ -33,10 +50,18 @@ class VisaOfferController extends Controller
         $crtFilePath = realpath(getcwd() . $this->container->get('visa_config')['file_name']['certificate']);
         $keyFilePath = realpath(getcwd() . $this->container->get('visa_config')['file_name']['private_key']);
 
+        // if args exists
+        // build query
+        $queryParams = '';
+        if($args){
+            $queryParams .= '?';
+            $queryParams .= http_build_query($args);
+        }
+
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->container->get('visa_config')['url'] . $uri,
+            CURLOPT_URL => $this->container->get('visa_config')['url'] . $uri . $queryParams,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",
             CURLOPT_MAXREDIRS => 10,

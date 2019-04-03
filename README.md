@@ -14,10 +14,10 @@ Get all offers
 
 `offers`
 
-Filter offers with available country
-
-`offers/country/{country_code}`
-
 Get selected offer details
 
 `offers/{offer_id}`
+
+Filter offers with available country
+
+`offers/country/{country_code}`
