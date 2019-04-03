@@ -4,9 +4,9 @@ This is a PHP web application for test **Visa APIs** with certificate files. Thi
 
 ## install
 
-Add your certificate (.pem), private key (.pem) files to `{app_root}/keys/visa/` folder and rename those to cert.pem and key.pem
+- Add your certificate (.pem), private key (.pem) files to `{app_root}/keys/visa/` folder and rename those to cert.pem and key.pem
 
-
+- Update `src/settings.php` file with Visa Developer credentials
 
 ## APIs
 
