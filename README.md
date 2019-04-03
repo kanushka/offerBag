@@ -2,6 +2,12 @@
 
 This is a PHP web application for test **Visa APIs** with certificate files. This will retrieve Visa offers.
 
+## install
+
+Add your certificate (.pem), private key (.pem) files to `{app_root}/keys/visa/` folder and rename those to cert.pem and key.pem
+
+
+
 ## APIs
 
 Get all offers
