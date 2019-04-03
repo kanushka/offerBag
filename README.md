@@ -8,6 +8,11 @@ This is a PHP web application for test **Visa APIs** with certificate files. Thi
 
 - Update `src/settings.php` file with Visa Developer credentials
 
+
+Then You can then run it with PHP's built-in webserver:
+
+`$ cd offerBag; php -S localhost:8000 -t public public/index.php`
+
 ## APIs
 
 Get all offers
