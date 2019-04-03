@@ -17,3 +17,8 @@ $container['logger'] = function ($c) {
     $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
     return $logger;
 };
+
+// controllers
+$container['VisaOfferController'] = function ($c){
+    return new App\Controllers\VisaOfferController($c);
+};
