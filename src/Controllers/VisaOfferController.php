@@ -8,6 +8,9 @@
 
 namespace App\Controllers;
 
+use \Datetime;
+use \DateTimeZone;
+
 class VisaOfferController extends Controller
 {
 
@@ -19,27 +22,64 @@ class VisaOfferController extends Controller
     public function getAllOffers($request, $response, $args)
     {
         $res = $this->httpRequest("vmorc/offers/v1/all", 'GET');
-        return $response->withJson($res);
+        
+        if ($res['error']) {
+            return $response->withJson($res);
+        }
+
+        $offers = $this->filterOffers($res['response']->Offers);
+
+        return $response->withJson([
+            'error' => false,
+            'offers' => $offers,
+        ]);
     }
 
     public function getOfferById($request, $response, $args)
     {
-        $res = $this->httpRequest("vmorc/offers/v1/byofferid", 'GET', [
-            'offerid' => $args['id'],
+        $res = $this->httpRequest(
+            "vmorc/offers/v1/byofferid",
+            'GET',
+            [
+                'offerid' => $args['id'],
+            ]
+        );
+
+        if ($res['error']) {
+            return $response->withJson($res);
+        }
+
+        $offers = $this->filterOffers($res['response']->Offers);
+
+        return $response->withJson([
+            'error' => false,
+            'offers' => $offers,
         ]);
-        return $response->withJson($res);
     }
 
     public function getCountyPromotedOffers($request, $response, $args)
     {
-        $res = $this->httpRequest("vmorc/offers/v1/byfilter", 'GET', [
-            'promoting_country' => $args['code'],
-        ]
-    );
-        return $response->withJson($res);
+        $res = $this->httpRequest(
+            "vmorc/offers/v1/byfilter",
+            'GET',
+            [
+                'promoting_country' => $args['code'],
+            ]
+        );
+        
+        if ($res['error']) {
+            return $response->withJson($res);
+        }
+
+        $offers = $this->filterOffers($res['response']->Offers);
+
+        return $response->withJson([
+            'error' => false,
+            'offers' => $offers,
+        ]);
     }
 
-    private function httpRequest($uri, $method='GET', $args=null, $body=null)
+    private function httpRequest($uri, $method = 'GET', $args = null, $body = null)
     {
         // user credentials
         $username = $this->container->get('visa_config')['username'];
@@ -53,7 +93,7 @@ class VisaOfferController extends Controller
         // if args exists
         // build query
         $queryParams = '';
-        if($args){
+        if ($args) {
             $queryParams .= '?';
             $queryParams .= http_build_query($args);
         }
@@ -94,5 +134,60 @@ class VisaOfferController extends Controller
             'error' => false,
             'response' => json_decode($res),
         ];
+    }
+
+    // filter offer list to get what required
+    private function filterOffers($offers)
+    {
+        $customizedOffers = [];
+        foreach ($offers as $key => $offer) {
+
+            $dummyOffer = [
+                "offerId" => $offer->offerId,
+                "offerStatus" => $offer->offerStatus,
+                "offerTitle" => $offer->offerTitle,
+                "validityFromDate" => $this->dateToLocal($offer->validityFromDate),
+                "validityToDate" => $this->dateToLocal($offer->validityToDate),
+                "offerShortDescription" => $offer->offerCopy->text,
+                "merchantTerms" => $offer->merchantTerms->text,
+                "visaTerms" => $offer->visaTerms->text,
+                "imageList" => [],
+                "merchantList" => [],
+            ];
+
+            // add image list
+            foreach ($offer->imageList as $key => $image) {
+                array_push($dummyOffer['imageList'], $image->fileLocation);
+            }
+
+            // add image list
+            foreach ($offer->merchantList as $key => $merchant) {
+                array_push($dummyOffer['merchantList'], [
+                    'merchant' => $merchant->merchant,
+                    'merchantAddress' => sizeof($merchant->merchantAddress) > 0 ?
+                    [
+                        'address1' => $merchant->merchantAddress[0]->address1,
+                        'address2' => $merchant->merchantAddress[0]->address2,
+                        'city' => $merchant->merchantAddress[0]->city,
+                        'state' => $merchant->merchantAddress[0]->state,
+                        'countryName' => $merchant->merchantAddress[0]->countryName,
+                        'phoneNumbers' => $merchant->merchantAddress[0]->phoneNumbers,
+                    ] : null,
+                    'merchantImage' => sizeof($merchant->merchantImages) > 0 ? $merchant->merchantImages[0]->fileLocation : null,
+                ]);
+            }
+
+            array_push($customizedOffers, $dummyOffer);
+            unset($dummyOffer);
+        }
+
+        return $customizedOffers;
+    }
+
+    private function dateToLocal($dateTime)
+    {
+        $date = new DateTime($dateTime, new DateTimeZone('UTC'));
+        $date->setTimezone(new DateTimeZone('Asia/Colombo'));
+        return $date->format('Y-m-d');
     }
 }
